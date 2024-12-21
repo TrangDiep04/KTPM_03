@@ -9,3 +9,7 @@ API
 - patch theo id http://localhost:3000/movies/{id}
 - delete theo id http://localhost:3000/movies/{id}
   Su dung postman theo các đường link trên 
+- Cai dat cac goi lien quan:
+  + npm i express
+  + npm i cors
+  
