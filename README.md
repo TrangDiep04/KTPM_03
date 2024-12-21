@@ -11,5 +11,7 @@ API
   Su dung postman theo các đường link trên 
 - Cai dat cac goi lien quan:
   + npm i express
+  + npm i
   + npm i cors
+  - Truong hop lỗi can find module accept thì chạy lệnh rm -rf node_modules package-lock.json. sau đó chạy lại lệnh npm i 
   
