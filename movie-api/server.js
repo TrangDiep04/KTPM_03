@@ -29,67 +29,131 @@ let movies = [
 app.get('/movies', (req, res) => {
     res.json(movies);
 });
-
 // GET: Lấy một bộ phim theo ID
 app.get('/movies/:id', (req, res) => {
-    const movie = movies.find(m => m.id === parseInt(req.params.id));
-    if (!movie) return res.status(404).send('Movie not found');
+    const id = req.params.id;
+
+    // Kiểm tra nếu ID không phải là số
+    if (isNaN(id)) {
+        return res.status(400).send('Invalid ID format');
+    }
+    // Tìm kiếm phim theo ID sau khi đảm bảo ID hợp lệ
+    const movie = movies.find(m => m.id === parseInt(id));
+    if (!movie) {
+        return res.status(404).send('Movie not found');
+    }
+    // Trả về phim nếu tìm thấy
     res.json(movie);
 });
 
 // POST: Tạo một bộ phim mới
 app.post('/movies', (req, res) => {
+    // Lấy ID và các trường thông tin từ request body
+    const { id, title, director, year, image } = req.body;
+
+    // Kiểm tra nếu ID không phải là một số hợp lệ
+    if (isNaN(id)) {
+        return res.status(400).send('Invalid ID format. ID must be a valid number.');
+    }
+    // Kiểm tra nếu ID đã tồn tại
+    const existingMovie = movies.find(m => m.id === parseInt(id));
+    if (existingMovie) {
+        return res.status(400).send('ID already exists. Please use a unique ID.');
+    }
+    // Tạo phim mới
     const newMovie = {
-        id: movies.length + 1,
-        title: req.body.title,
-        director: req.body.director,
-        year: req.body.year,
-        image: req.body.image // Thêm trường hình ảnh
+        id: parseInt(id), // Chuyển ID thành số nếu hợp lệ
+        title,
+        director,
+        year,
+        image
     };
+    // Thêm vào danh sách phim
     movies.push(newMovie);
+    // Trả về phim vừa tạo
     res.status(201).json(newMovie);
 });
 
+
+
 // PUT: Cập nhật một bộ phim theo ID
 app.put('/movies/:id', (req, res) => {
-    const movie = movies.find(m => m.id === parseInt(req.params.id));
+    const id = req.params.id;
+
+    // Kiểm tra nếu ID không phải là một số hợp lệ
+    if (isNaN(id)) {
+        return res.status(400).send('Invalid ID format. ID must be a valid number.');
+    }
+
+    // Tìm phim theo ID sau khi đảm bảo ID hợp lệ
+    const movie = movies.find(m => m.id === parseInt(id));
     if (!movie) return res.status(404).send('Movie not found');
 
+    // Cập nhật thông tin phim
     movie.title = req.body.title;
     movie.director = req.body.director;
     movie.year = req.body.year;
     movie.image = req.body.image; // Cập nhật hình ảnh
+
+    // Trả về phim đã cập nhật
     res.json(movie);
 });
 
+
 // PATCH: Cập nhật một phần của bộ phim theo ID
 app.patch('/movies/:id', (req, res) => {
-    const movie = movies.find(m => m.id === parseInt(req.params.id));
-    if (!movie) return res.status(404).send('Movie not found');
+    const id = req.params.id;
+    // Kiểm tra nếu ID không phải là một số hợp lệ
+    if (isNaN(id)) {
+        return res.status(400).send('Invalid ID format. ID must be a valid number.');
+    }
+    // Tìm phim theo ID
+    const movie = movies.find(m => m.id === parseInt(id));
+    if (!movie) {
+        return res.status(404).send('Movie not found');
+    }
 
-    if (req.body.title) {
-        movie.title = req.body.title;
+    // Kiểm tra và cập nhật các trường hợp nếu trường dữ liệu hợp lệ
+    const validFields = ['title', 'director', 'year', 'image'];
+
+    for (let field in req.body) {
+        // Kiểm tra nếu trường không hợp lệ
+        if (!validFields.includes(field)) {
+            return res.status(400).send(`Invalid field: ${field}. Valid fields are title, director, year, and image.`);
+        }
+
+        // Kiểm tra nếu dữ liệu trường "year" không phải là số
+        if (field === 'year' && isNaN(req.body[field])) {
+            return res.status(400).send('Invalid year format. Year must be a valid number.');
+        }
+
+        // Cập nhật trường hợp hợp lệ
+        movie[field] = req.body[field];
     }
-    if (req.body.director) {
-        movie.director = req.body.director;
-    }
-    if (req.body.year) {
-        movie.year = req.body.year;
-    }
-    if (req.body.image) {
-        movie.image = req.body.image; // Cập nhật hình ảnh
-    }
+
+    // Trả về phim đã cập nhật
     res.json(movie);
 });
 
 // DELETE: Xóa một bộ phim theo ID
 app.delete('/movies/:id', (req, res) => {
     const movieIndex = movies.findIndex(m => m.id === parseInt(req.params.id));
-    if (movieIndex === -1) return res.status(404).send('Movie not found');
+    
+    // Kiểm tra nếu phim không tồn tại
+    if (movieIndex === -1) {
+        return res.status(404).send('Movie not found');
+    }
 
-    movies.splice(movieIndex, 1);
-    res.status(204).send();
+    // Xóa phim khỏi danh sách
+    const deletedMovie = movies.splice(movieIndex, 1);
+
+    // Trả về thông báo thành công kèm thông tin phim đã xóa
+    res.status(200).json({
+        message: 'Movie deleted successfully',
+        movie: deletedMovie[0] // Trả về phim đã xóa
+    });
 });
+
 
 // Khởi động máy chủ
 app.listen(PORT, () => {
